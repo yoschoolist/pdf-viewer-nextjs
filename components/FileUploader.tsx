@@ -86,12 +86,13 @@ export default function FileUploader() {
       // Show verification URL if registration was provided
       if (data.verificationUrl) {
         const fullUrl = `${window.location.origin}${data.verificationUrl}`;
-        alert(
-          `File uploaded and registered successfully!\n\n` +
-          `Verification URL:\n${fullUrl}\n\n` +
-          `This URL will be copied to your clipboard.`
-        );
+        
+        // Copy URL to clipboard
         navigator.clipboard.writeText(fullUrl);
+        
+        // Redirect to verification page
+        window.location.href = data.verificationUrl;
+        return; // Exit early since we're redirecting
       } else {
         alert(`File uploaded successfully: ${data.filename}`);
       }
