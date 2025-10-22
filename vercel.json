@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/API/doc_verification",
+      "destination": "/api/doc_verification"
+    }
+  ]
+}
+
