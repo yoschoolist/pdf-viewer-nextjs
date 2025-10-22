@@ -10,6 +10,7 @@
     "postinstall": "cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.0.0",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.546.0",
     "next": "16.0.0",

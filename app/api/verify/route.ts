@@ -9,6 +9,7 @@ interface DocumentRecord {
   registrationNumber: string;
   documentType: string;
   filename: string;
+  publicUrl?: string; // Add support for external URLs (Blob Storage)
   uploadedAt: string;
   verified: boolean;
   studentName?: string;
@@ -74,7 +75,7 @@ export async function GET(request: NextRequest) {
       documentType: document.documentType,
       filename: document.filename,
       uploadedAt: document.uploadedAt,
-      url: `/uploads/${document.filename}`,
+      url: document.publicUrl || `/uploads/${document.filename}`, // Use publicUrl if available
       studentName: document.studentName,
       institution: document.institution,
       metadata: document.metadata,
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       registrationNumber, 
       documentType, 
       filename,
+      publicUrl,
       studentName,
       institution,
       metadata 
@@ -113,6 +115,7 @@ export async function POST(request: NextRequest) {
       registrationNumber,
       documentType,
       filename,
+      publicUrl, // Store the public URL (can be Blob Storage or local)
       uploadedAt: new Date().toISOString(),
       verified: true,
       studentName,
@@ -178,5 +181,26 @@ export async function DELETE(request: NextRequest) {
     success: true,
     message: 'Document removed from registry',
   });
+}
+
+// New endpoint to list all documents
+export async function PUT(request: NextRequest) {
+  try {
+    const registry = await getRegistry();
+    
+    const files = registry.documents.map(doc => ({
+      filename: doc.filename,
+      url: doc.publicUrl || `/uploads/${doc.filename}`,
+      size: 0, // Size not stored in registry
+      uploadedAt: doc.uploadedAt,
+      registrationNumber: doc.registrationNumber,
+      documentType: doc.documentType,
+    }));
+
+    return NextResponse.json({ files });
+  } catch (error) {
+    console.error('Error listing documents:', error);
+    return NextResponse.json({ files: [] });
+  }
 }
 

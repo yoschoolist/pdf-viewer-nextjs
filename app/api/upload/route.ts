@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,25 +24,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
     // Generate unique filename with timestamp
     const timestamp = Date.now();
     const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const filename = `${timestamp}_${originalName}`;
-    const filepath = join(uploadsDir, filename);
 
-    // Convert file to buffer and save
+    // Convert file to base64 for storage in registry
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filepath, buffer);
-
-    // Return the public URL
-    const publicUrl = `/uploads/${filename}`;
+    const base64 = Buffer.from(bytes).toString('base64');
+    const dataUrl = `data:application/pdf;base64,${base64}`;
+    
+    const publicUrl = dataUrl; // Store as data URL
 
     // If registration info provided, register the document
     let verificationUrl = null;
@@ -58,6 +47,7 @@ export async function POST(request: NextRequest) {
             registrationNumber,
             documentType,
             filename,
+            publicUrl, // Store the actual URL (Blob or local)
             studentName,
             institution,
           }),
@@ -89,37 +79,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Optional: GET endpoint to list uploaded files
+// GET endpoint to list uploaded files from registry
 export async function GET() {
   try {
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
-    
-    if (!existsSync(uploadsDir)) {
+    // Fetch from the verify API which reads the registry
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/verify/list`);
+    if (!response.ok) {
       return NextResponse.json({ files: [] });
     }
-
-    const fs = require('fs');
-    const files = fs.readdirSync(uploadsDir);
     
-    const fileList = files
-      .filter((file: string) => file.endsWith('.pdf'))
-      .map((file: string) => {
-        const stats = fs.statSync(join(uploadsDir, file));
-        return {
-          filename: file,
-          url: `/uploads/${file}`,
-          size: stats.size,
-          uploadedAt: stats.birthtime,
-        };
-      })
-      .sort((a: any, b: any) => 
-        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-      );
-
-    return NextResponse.json({ files: fileList });
+    const data = await response.json();
+    return NextResponse.json({ files: data.files || [] });
   } catch (error) {
     console.error('Error listing files:', error);
     return NextResponse.json({ files: [] });
   }
 }
-
