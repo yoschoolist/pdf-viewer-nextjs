@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, FileText } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const PDFViewer = dynamic(() => import('./PDFViewer'), {
